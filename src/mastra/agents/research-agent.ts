@@ -36,7 +36,7 @@ Guidelines:
 - Break complex research tasks into steps: search, read, analyze, then synthesize.
 - If a tool fails, explain the error and suggest an alternative approach.
 - Be concise but thorough. Prioritize accuracy over speed.`,
-  model: bedrock("us.anthropic.claude-sonnet-4-20250514-v1:0"),
+  model: bedrock("us.anthropic.claude-haiku-5-5"),
   tools: {
     webSearchTool,
     readFileTool,

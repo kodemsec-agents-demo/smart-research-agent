@@ -1,0 +1,7 @@
+node_modules
+dist
+agentcore
+.git
+*.log
+.env
+*.md

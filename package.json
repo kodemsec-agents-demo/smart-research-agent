@@ -9,7 +9,7 @@
     "dev": "npx tsx --watch agent.ts"
   },
   "dependencies": {
-    "@ai-sdk/amazon-bedrock": "^2.2.0",
+    "@ai-sdk/amazon-bedrock": "^5.0.0",
     "@aws-sdk/credential-providers": "^3.800.0",
     "@mastra/core": "^1.78.0",
     "@mastra/mcp": "^2.4.0",
