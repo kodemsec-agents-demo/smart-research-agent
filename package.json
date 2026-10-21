@@ -1,0 +1,26 @@
+{
+  "name": "smart-research-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/agent.js",
+    "dev": "npx tsx --watch agent.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^2.2.0",
+    "@aws-sdk/credential-providers": "^3.800.0",
+    "@mastra/core": "^0.10.0",
+    "@mastra/mcp": "^0.5.0",
+    "@mastra/loggers": "^0.3.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.58.0",
+    "bedrock-agentcore": "^1.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "tsx": "^4.19.0"
+  }
+}

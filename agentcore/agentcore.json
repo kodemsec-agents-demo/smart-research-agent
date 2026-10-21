@@ -1,0 +1,13 @@
+{
+  "name": "SmartResearchAgent",
+  "agents": [
+    {
+      "name": "ResearchAgent",
+      "type": "byo",
+      "build": "Container",
+      "language": "TypeScript",
+      "codeLocation": ".",
+      "modelProvider": "Bedrock"
+    }
+  ]
+}
