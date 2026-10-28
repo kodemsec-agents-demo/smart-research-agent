@@ -4,7 +4,9 @@ A Mastra-based AI agent with web search, file I/O, database queries, and MCP too
 
 ## Capabilities
 
-### Local Tools
+Every tool but the filesystem MCP server runs behind an **AgentCore gateway**: the agent loads them from the gateway over MCP.
+
+### Gateway Tools (`research-tools` target, one Lambda)
 | Tool | Description |
 |------|-------------|
 | **Web Search** | Search the web via Brave Search API |
@@ -14,30 +16,30 @@ A Mastra-based AI agent with web search, file I/O, database queries, and MCP too
 | **DB Query** | Run read-only SQL queries against PostgreSQL |
 | **Calculator** | Evaluate mathematical expressions |
 
-### MCP Server Tools
-| Server | Description |
-|--------|-------------|
-| **GitHub** (`@modelcontextprotocol/server-github`) | Browse repos, issues, PRs, code |
-| **Filesystem** (`@modelcontextprotocol/server-filesystem`) | Navigate and read files on the host |
+### MCP Servers
+| Server | Where | Description |
+|--------|-------|-------------|
+| **DeepWiki** (remote, `https://mcp.deepwiki.com/mcp`, no sign-in) | Gateway `deepwiki` target | Ask about public GitHub repositories and read their documentation |
+| **Filesystem** (`@modelcontextprotocol/server-filesystem`) | In the agent's container (stdio) | Navigate and read files on the host |
 
 ## Project Structure
 
 ```
-├── agent.ts                          # AgentCore runtime entry point
-├── src/mastra/
-│   ├── agents/research-agent.ts      # Agent definition with all tools
-│   ├── tools/
-│   │   ├── web-search.ts             # Brave Search integration
-│   │   ├── summarize.ts              # URL fetcher and text extractor
-│   │   ├── file-ops.ts               # Read/write file tools
-│   │   ├── db-query.ts               # PostgreSQL query tool
-│   │   └── calculator.ts             # Math expression evaluator
-│   ├── mcp/client.ts                 # MCP client config (GitHub, filesystem)
-│   └── index.ts                      # Mastra instance
+├── app/ResearchAgent/                # The agent (AgentCore runtime code)
+│   ├── agent.ts                      # Entry point: renews the gateway token per invocation
+│   └── src/mastra/
+│       ├── agents/research-agent.ts  # Agent definition: gateway + filesystem tools
+│       ├── mcp/gateway.ts            # Gateway MCP client and its Cognito token
+│       ├── mcp/client.ts             # Local filesystem MCP server
+│       └── index.ts                  # Mastra instance
+├── gateway/research_tools/           # The gateway's research-tools Lambda
+│   ├── handler.ts                    # Runs the tool the gateway names
+│   ├── tool_schema.json              # The tools' schemas, as the gateway lists them
+│   └── tools/                        # web-search, summarize, file-ops, db-query, calculator
 ├── agentcore/
 │   ├── agentcore.json                # AgentCore project config
-│   └── aws-targets.json              # Deployment target
-├── Dockerfile                        # Multi-stage build for AgentCore Runtime
+│   ├── aws-targets.json              # Deployment target
+│   └── cdk/lib/research-gateway-tools.ts  # Gateway targets, Lambda and identities
 └── .env.example                      # Environment variables template
 ```
 
@@ -60,6 +62,9 @@ npx @aws/agentcore dev --runtime ResearchAgent
 
 ## Deploy to AgentCore
 
+The gateway (`gateway-quick-start-54ab07`, account 643254130632) is created outside this project; its id, URL, role and
+Cognito sign-in are the `researchGateway` context in `agentcore/cdk/cdk.json`.
+
 ```bash
 # Deploy (builds with CodeBuild, pushes to ECR, creates runtime)
 npx @aws/agentcore deploy
@@ -76,17 +81,18 @@ npx @aws/agentcore invoke "Research the latest developments in AI agent framewor
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `AWS_REGION` | Yes | AWS region (default: `us-east-1`) |
-| `SEARCH_API_KEY` | For web search | Brave Search API key |
-| `GITHUB_TOKEN` | For GitHub MCP | GitHub personal access token |
-| `DATABASE_URL` | For DB queries | PostgreSQL connection string |
-| `WORKSPACE_DIR` | No | File workspace path (default: `/tmp/workspace`) |
+| `SEARCH_API_KEY` | For web search | Brave Search API key, on the tools Lambda |
+| `DATABASE_URL` | For DB queries | PostgreSQL connection string, on the tools Lambda |
+| `WORKSPACE_DIR` | No | File workspace path (default: `/tmp/workspace`), on the Lambda and the agent's filesystem server |
+
+The stack sets the agent's `RESEARCH_GATEWAY_*` variables.
 
 ## Architecture
 
 The agent uses **Mastra** as its AI framework with **Amazon Bedrock** (Claude Sonnet) as the LLM provider. It combines:
 
-1. **Local tools** — custom TypeScript tools for web search, file I/O, database access, and computation
-2. **MCP tools** — external tool servers (GitHub, filesystem) connected via the Model Context Protocol
+1. **Gateway tools** — custom TypeScript tools for web search, file I/O, database access, and computation, in a Lambda behind the AgentCore gateway, and DeepWiki's remote MCP server as a gateway target. The agent signs in to the gateway with a Cognito token from AgentCore Identity
+2. **Local MCP tools** — the filesystem MCP server, run in the agent's container
 3. **AgentCore Runtime** — AWS-managed serverless microVM environment with automatic OpenTelemetry instrumentation
 
 The OTel auto-instrumentation means every tool call, LLM invocation, and agent step is traced and visible in CloudWatch Transaction Search — no manual tracing code needed.
