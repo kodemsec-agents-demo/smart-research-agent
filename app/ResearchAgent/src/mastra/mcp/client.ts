@@ -1,6 +1,6 @@
 import { MCPClient } from "@mastra/mcp";
 
-// The local MCP servers, run in the agent's container. GitHub's remote MCP
+// The local MCP servers, run in the agent's container. DeepWiki's remote MCP
 // server is a target of the gateway (see gateway.ts)
 export const mcpClient = new MCPClient({
   id: "research-mcp-client",

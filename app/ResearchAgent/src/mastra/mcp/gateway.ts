@@ -58,14 +58,15 @@ export async function refreshGatewayToken(): Promise<void> {
 let tools: Awaited<ReturnType<MCPClient["listTools"]>> | undefined;
 
 /**
- * The tools of this agent's gateway targets. The gateway may serve other
- * agents' targets too, which this agent leaves out.
+ * The tools of this agent's gateway targets, by their own names with
+ * underscores (web_search): the model's tool use breaks on hyphens. The
+ * gateway may serve other agents' targets too, which this agent leaves out.
  */
 export async function listGatewayTools() {
   tools ??= Object.fromEntries(
-    Object.entries(await gateway.listTools()).filter(([name]) => {
-      const target = name.slice(`${SERVER_NAME}_`.length).split(TARGET_SEPARATOR)[0];
-      return GATEWAY_TARGETS.includes(target);
+    Object.entries(await gateway.listTools()).flatMap(([name, tool]) => {
+      const [target, toolName] = name.slice(`${SERVER_NAME}_`.length).split(TARGET_SEPARATOR);
+      return GATEWAY_TARGETS.includes(target) ? [[toolName.replaceAll("-", "_"), tool]] : [];
     })
   );
   return tools;

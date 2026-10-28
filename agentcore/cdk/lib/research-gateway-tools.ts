@@ -17,8 +17,6 @@ export interface ResearchGatewayContext {
   /** The gateway's Cognito sign-in: the OAuth2 credential provider and its scopes */
   credentialProvider: string;
   scopes: string[];
-  /** The AgentCore Identity API key provider holding the GitHub token of the github target */
-  githubApiKeyProviderArn: string;
 }
 
 export interface ResearchGatewayToolsProps {
@@ -34,13 +32,13 @@ export interface ResearchGatewayToolsProps {
 
 // The CLI runs CDK from agentcore/cdk/, so the repository root is two levels up
 const TOOLS_DIR = path.resolve(process.cwd(), '..', '..', 'gateway', 'research_tools');
-// GitHub's remote MCP server, which takes the token as a bearer token
-const GITHUB_MCP_URL = 'https://api.githubcopilot.com/mcp/';
-const TARGETS = { tools: 'research-tools', github: 'github' };
+// DeepWiki's remote MCP server: questions and documentation about public GitHub repositories
+const DEEPWIKI_MCP_URL = 'https://mcp.deepwiki.com/mcp';
+const TARGETS = { tools: 'research-tools', deepwiki: 'deepwiki' };
 
 /**
  * Runs the research tools in one Lambda behind the gateway's research-tools
- * target, puts GitHub's remote MCP server behind its github target, and lets the
+ * target, puts DeepWiki's remote MCP server behind its deepwiki target, and lets the
  * agent runtimes get the gateway's Cognito token as their own workload identity.
  */
 export class ResearchGatewayTools extends Construct {
@@ -87,49 +85,13 @@ export class ResearchGatewayTools extends Construct {
     // The target is checked on creation, so the permission (a child of the function) comes first
     toolsTarget.node.addDependency(toolsFunction);
 
-    // The gateway reads the GitHub token from AgentCore Identity with its role,
-    // which the console created without these permissions
-    const gatewayRole = iam.Role.fromRoleArn(this, 'GatewayRole', gateway.roleArn);
-    const githubKeyAccess = new iam.Policy(this, 'GatewayGithubKeyAccess', {
-      roles: [gatewayRole],
-      statements: [
-        new iam.PolicyStatement({
-          actions: ['bedrock-agentcore:GetWorkloadAccessToken', 'bedrock-agentcore:GetResourceApiKey'],
-          resources: [
-            identityArn('workload-identity-directory/default'),
-            identityArn('workload-identity-directory/default/workload-identity/*'),
-            identityArn('token-vault/default'),
-            gateway.githubApiKeyProviderArn,
-          ],
-        }),
-        new iam.PolicyStatement({
-          actions: ['secretsmanager:GetSecretValue'],
-          resources: [`arn:${stack.partition}:secretsmanager:${stack.region}:${stack.account}:secret:bedrock-agentcore-identity!*`],
-        }),
-      ],
-    });
-
-    const githubTarget = new agentcore.CfnGatewayTarget(this, 'GithubTarget', {
+    // DeepWiki's MCP server is public: the gateway calls it without credentials
+    new agentcore.CfnGatewayTarget(this, 'DeepwikiTarget', {
       gatewayIdentifier: gateway.id,
-      name: TARGETS.github,
-      description: "GitHub's remote MCP server: repositories, issues, pull requests and code",
-      targetConfiguration: { mcp: { mcpServer: { endpoint: GITHUB_MCP_URL } } },
-      credentialProviderConfigurations: [
-        {
-          credentialProviderType: 'API_KEY',
-          credentialProvider: {
-            apiKeyCredentialProvider: {
-              providerArn: gateway.githubApiKeyProviderArn,
-              credentialLocation: 'HEADER',
-              credentialParameterName: 'Authorization',
-              credentialPrefix: 'Bearer',
-            },
-          },
-        },
-      ],
+      name: TARGETS.deepwiki,
+      description: "DeepWiki's remote MCP server: documentation of public GitHub repositories",
+      targetConfiguration: { mcp: { mcpServer: { endpoint: DEEPWIKI_MCP_URL } } },
     });
-    // Creating the target lists GitHub's tools, which needs the token
-    githubTarget.node.addDependency(githubKeyAccess);
 
     // The identity the agents fetch the gateway's machine-to-machine token as
     const workload = new agentcore.CfnWorkloadIdentity(this, 'WorkloadIdentity', {

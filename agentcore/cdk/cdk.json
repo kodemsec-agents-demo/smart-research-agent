@@ -106,8 +106,7 @@
       "credentialProvider": "triage-gateway",
       "scopes": [
         "gateway-quick-start-54ab07/genesis-gateway:invoke"
-      ],
-      "githubApiKeyProviderArn": "arn:aws:bedrock-agentcore:us-east-1:643254130632:token-vault/default/apikeycredentialprovider/github-mcp"
+      ]
     }
   }
 }

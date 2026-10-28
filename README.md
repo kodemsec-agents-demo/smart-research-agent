@@ -19,7 +19,7 @@ Every tool but the filesystem MCP server runs behind an **AgentCore gateway**: t
 ### MCP Servers
 | Server | Where | Description |
 |--------|-------|-------------|
-| **GitHub** (remote, `https://api.githubcopilot.com/mcp/`) | Gateway `github` target | Browse repos, issues, PRs, code |
+| **DeepWiki** (remote, `https://mcp.deepwiki.com/mcp`, no sign-in) | Gateway `deepwiki` target | Ask about public GitHub repositories and read their documentation |
 | **Filesystem** (`@modelcontextprotocol/server-filesystem`) | In the agent's container (stdio) | Navigate and read files on the host |
 
 ## Project Structure
@@ -62,16 +62,8 @@ npx @aws/agentcore dev --runtime ResearchAgent
 
 ## Deploy to AgentCore
 
-The gateway (`gateway-quick-start-54ab07`, account 643254130632) is created outside this project; its id, URL, role, Cognito
-sign-in and the GitHub token's provider are the `researchGateway` context in `agentcore/cdk/cdk.json`. Before the first
-deploy, store a GitHub token in AgentCore Identity as the `github-mcp` API key provider (the gateway sends it to GitHub's
-MCP server):
-
-```bash
-printf '%s' "$GITHUB_TOKEN" > /tmp/github-token && \
-  aws bedrock-agentcore-control create-api-key-credential-provider --name github-mcp \
-    --api-key "file:///tmp/github-token" --query credentialProviderArn; rm -f /tmp/github-token
-```
+The gateway (`gateway-quick-start-54ab07`, account 643254130632) is created outside this project; its id, URL, role and
+Cognito sign-in are the `researchGateway` context in `agentcore/cdk/cdk.json`.
 
 ```bash
 # Deploy (builds with CodeBuild, pushes to ECR, creates runtime)
@@ -93,13 +85,13 @@ npx @aws/agentcore invoke "Research the latest developments in AI agent framewor
 | `DATABASE_URL` | For DB queries | PostgreSQL connection string, on the tools Lambda |
 | `WORKSPACE_DIR` | No | File workspace path (default: `/tmp/workspace`), on the Lambda and the agent's filesystem server |
 
-The stack sets the agent's `RESEARCH_GATEWAY_*` variables; the GitHub token is in AgentCore Identity (see above).
+The stack sets the agent's `RESEARCH_GATEWAY_*` variables.
 
 ## Architecture
 
 The agent uses **Mastra** as its AI framework with **Amazon Bedrock** (Claude Sonnet) as the LLM provider. It combines:
 
-1. **Gateway tools** — custom TypeScript tools for web search, file I/O, database access, and computation, in a Lambda behind the AgentCore gateway, and GitHub's remote MCP server as a gateway target. The agent signs in to the gateway with a Cognito token from AgentCore Identity
+1. **Gateway tools** — custom TypeScript tools for web search, file I/O, database access, and computation, in a Lambda behind the AgentCore gateway, and DeepWiki's remote MCP server as a gateway target. The agent signs in to the gateway with a Cognito token from AgentCore Identity
 2. **Local MCP tools** — the filesystem MCP server, run in the agent's container
 3. **AgentCore Runtime** — AWS-managed serverless microVM environment with automatic OpenTelemetry instrumentation
 
