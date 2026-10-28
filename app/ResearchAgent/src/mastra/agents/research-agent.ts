@@ -1,12 +1,25 @@
 import { Agent } from "@mastra/core/agent";
-import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
-import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 import { mcpClient } from "../mcp/client.js";
-import { listGatewayTools } from "../mcp/gateway.js";
+import { getGatewayToken, listGatewayTools } from "../mcp/gateway.js";
 
-const bedrock = createAmazonBedrock({
-  credentialProvider: fromNodeProviderChain(),
+// The model runs behind the agents' LLM gateway, whose inference endpoint
+// speaks the OpenAI API; the stack sets its URL
+const LLM_GATEWAY_URL = process.env.RESEARCH_LLM_GATEWAY_URL;
+if (!LLM_GATEWAY_URL) throw new Error("RESEARCH_LLM_GATEWAY_URL is not set: the stack sets it for the LLM gateway");
+const MODEL_ID = "openai.gpt-oss-120b-1:0";
+
+const llmGateway = createOpenAICompatible({
+  name: "agents-llm",
+  baseURL: LLM_GATEWAY_URL,
+  // The LLM gateway takes the same Cognito token as the tools' gateway, read
+  // on every request, so a renewed one is used at once
+  fetch: (url, init) => {
+    const headers = new Headers(init?.headers);
+    headers.set("Authorization", `Bearer ${getGatewayToken()}`);
+    return fetch(url, { ...init, headers });
+  },
 });
 
 export const researchAgent = new Agent({
@@ -30,7 +43,7 @@ Guidelines:
 - Break complex research tasks into steps: search, read, analyze, then synthesize.
 - If a tool fails, explain the error and suggest an alternative approach.
 - Be concise but thorough. Prioritize accuracy over speed.`,
-  model: bedrock("amazon.nova-micro-v1:0"),
+  model: llmGateway(MODEL_ID),
   // The gateway's tools (web search, page fetching, files, database,
   // calculator and DeepWiki) and the local filesystem server's. Listed on each
   // call, as the gateway can only be reached within an invocation
