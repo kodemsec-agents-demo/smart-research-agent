@@ -1,0 +1,20 @@
+{
+  "name": "research-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The research agent's tools, behind the AgentCore gateway's research-tools target",
+  "scripts": {
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.8.0"
+  }
+}

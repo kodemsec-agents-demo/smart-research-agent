@@ -2,18 +2,12 @@ import { Agent } from "@mastra/core/agent";
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 
-import { webSearchTool } from "../tools/web-search.js";
-import { readFileTool, writeFileTool } from "../tools/file-ops.js";
-import { dbQueryTool } from "../tools/db-query.js";
-import { fetchAndSummarizeTool } from "../tools/summarize.js";
-import { calculatorTool } from "../tools/calculator.js";
 import { mcpClient } from "../mcp/client.js";
+import { listGatewayTools } from "../mcp/gateway.js";
 
 const bedrock = createAmazonBedrock({
   credentialProvider: fromNodeProviderChain(),
 });
-
-const mcpTools = await mcpClient.listTools();
 
 export const researchAgent = new Agent({
   id: "smart-research-agent",
@@ -37,13 +31,11 @@ Guidelines:
 - If a tool fails, explain the error and suggest an alternative approach.
 - Be concise but thorough. Prioritize accuracy over speed.`,
   model: bedrock("us.anthropic.claude-haiku-5-5"),
-  tools: {
-    webSearchTool,
-    readFileTool,
-    writeFileTool,
-    dbQueryTool,
-    fetchAndSummarizeTool,
-    calculatorTool,
-    ...mcpTools,
-  },
+  // The gateway's tools (web search, page fetching, files, database,
+  // calculator and GitHub) and the local filesystem server's. Listed on each
+  // call, as the gateway can only be reached within an invocation
+  tools: async () => ({
+    ...(await listGatewayTools()),
+    ...(await mcpClient.listTools()),
+  }),
 });

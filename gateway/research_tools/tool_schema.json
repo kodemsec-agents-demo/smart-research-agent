@@ -1,0 +1,89 @@
+[
+  {
+    "name": "web-search",
+    "description": "Search the web for current information on a topic. Returns a list of relevant results with titles, snippets, and URLs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string", "description": "The search query" },
+        "maxResults": {
+          "type": "number",
+          "description": "Maximum number of results to return, from 1 to 10 (default 5)"
+        }
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "fetch-and-summarize",
+    "description": "Fetch a web page by URL and return the first N characters of its text content. Useful for reading articles, documentation, or any publicly accessible page.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "The URL to fetch" },
+        "maxChars": {
+          "type": "number",
+          "description": "Maximum characters of page text to return, from 100 to 50000 (default 5000)"
+        }
+      },
+      "required": ["url"]
+    }
+  },
+  {
+    "name": "read-file",
+    "description": "Read the contents of a file from the workspace. Supports text files such as .txt, .json, .csv, .md, and code files.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string", "description": "Relative path to the file within the workspace" },
+        "encoding": {
+          "type": "string",
+          "description": "How to decode the file: utf-8 (default) or base64"
+        }
+      },
+      "required": ["path"]
+    }
+  },
+  {
+    "name": "write-file",
+    "description": "Write content to a file in the workspace. Creates parent directories if they don't exist.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string", "description": "Relative path to the file within the workspace" },
+        "content": { "type": "string", "description": "The content to write" }
+      },
+      "required": ["path", "content"]
+    }
+  },
+  {
+    "name": "db-query",
+    "description": "Execute a read-only SQL query against the configured PostgreSQL database. Only SELECT statements are allowed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sql": { "type": "string", "description": "A read-only SQL SELECT statement" },
+        "params": {
+          "type": "array",
+          "description": "Positional parameters for the query ($1, $2, ...)",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["sql"]
+    }
+  },
+  {
+    "name": "calculator",
+    "description": "Evaluate a mathematical expression. Supports arithmetic, exponents, parentheses, and common math functions (sqrt, abs, ceil, floor, round, min, max, log, sin, cos, tan, PI, E).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "A mathematical expression to evaluate, e.g. '(12 * 8) + sqrt(144)'"
+        }
+      },
+      "required": ["expression"]
+    }
+  }
+]
