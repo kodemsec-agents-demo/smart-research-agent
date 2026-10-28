@@ -17,6 +17,8 @@ export interface ResearchGatewayContext {
   /** The gateway's Cognito sign-in: the OAuth2 credential provider and its scopes */
   credentialProvider: string;
   scopes: string[];
+  /** The LLM gateway's OpenAI-compatible inference endpoint (…/inference/v1) */
+  llmUrl: string;
 }
 
 export interface ResearchGatewayToolsProps {
@@ -100,6 +102,7 @@ export class ResearchGatewayTools extends Construct {
 
     for (const runtime of runtimes) {
       runtime.addEnvironmentVariable('RESEARCH_GATEWAY_URL', gateway.url);
+      runtime.addEnvironmentVariable('RESEARCH_LLM_GATEWAY_URL', gateway.llmUrl);
       runtime.addEnvironmentVariable('RESEARCH_GATEWAY_TARGETS', Object.values(TARGETS).join(','));
       runtime.addEnvironmentVariable('RESEARCH_GATEWAY_WORKLOAD', workload.name);
       runtime.addEnvironmentVariable('RESEARCH_GATEWAY_CREDENTIAL_PROVIDER', gateway.credentialProvider);

@@ -24,4 +24,4 @@ USER bedrock_agentcore
 
 EXPOSE 8080 8000 9000
 
-CMD ["node", "--require", "@opentelemetry/auto-instrumentations-node/register", "dist/agent.js"]
+CMD ["node", "--require", "@aws/aws-distro-opentelemetry-node-autoinstrumentation/register", "dist/agent.js"]
