@@ -4,7 +4,7 @@ A Mastra-based AI agent with web search, file I/O, database queries, and MCP too
 
 ## Capabilities
 
-Every tool but the filesystem MCP server runs behind an **AgentCore gateway**: the agent loads them from the gateway over MCP.
+Every request to the agent goes through the agents' **entry gateway** (`agents-entry`, target `research-agent`). Its model, `openai.gpt-oss-120b-1:0`, runs behind the agents' **LLM gateway** (`agents-llm`), and every tool but the filesystem MCP server runs behind an **AgentCore MCP gateway**: the agent loads them from the gateway over MCP.
 
 ### Gateway Tools (`research-tools` target, one Lambda)
 | Tool | Description |
@@ -28,7 +28,7 @@ Every tool but the filesystem MCP server runs behind an **AgentCore gateway**: t
 ├── app/ResearchAgent/                # The agent (AgentCore runtime code)
 │   ├── agent.ts                      # Entry point: renews the gateway token per invocation
 │   └── src/mastra/
-│       ├── agents/research-agent.ts  # Agent definition: gateway + filesystem tools
+│       ├── agents/research-agent.ts  # Agent definition: LLM gateway model, gateway + filesystem tools
 │       ├── mcp/gateway.ts            # Gateway MCP client and its Cognito token
 │       ├── mcp/client.ts             # Local filesystem MCP server
 │       └── index.ts                  # Mastra instance
@@ -39,7 +39,9 @@ Every tool but the filesystem MCP server runs behind an **AgentCore gateway**: t
 ├── agentcore/
 │   ├── agentcore.json                # AgentCore project config
 │   ├── aws-targets.json              # Deployment target
-│   └── cdk/lib/research-gateway-tools.ts  # Gateway targets, Lambda and identities
+│   ├── cdk/lib/research-gateway-tools.ts  # Gateway targets, Lambda and identities
+│   └── cdk/lib/agent-entry-target.ts      # The entry gateway's target and the runtime's resource policy
+├── invoke.sh                         # Sends a prompt through the entry gateway
 └── .env.example                      # Environment variables template
 ```
 
@@ -72,8 +74,10 @@ npx @aws/agentcore deploy
 # Check status
 npx @aws/agentcore status
 
-# Invoke
-npx @aws/agentcore invoke "Research the latest developments in AI agent frameworks"
+# Invoke, through the agents' entry gateway. The runtime denies direct calls
+# except from the administrators' role (directInvokeRoleArns in
+# agentcore/cdk/cdk.json), so they can also test in the AgentCore console
+AWS_PROFILE=poc-external ./invoke.sh "Research the latest developments in AI agent frameworks"
 ```
 
 ## Environment Variables

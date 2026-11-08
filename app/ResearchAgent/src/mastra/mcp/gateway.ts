@@ -40,7 +40,10 @@ const gateway = new MCPClient({
   },
 });
 
-/** Renews the gateway token; called on each invocation, before the tools are used. */
+/** The gateway token the last refreshGatewayToken got; the LLM gateway takes it too. */
+export const getGatewayToken = (): string => gatewayToken;
+
+/** Renews the gateway token; called on each invocation, before the model and tools are used. */
 export async function refreshGatewayToken(): Promise<void> {
   const { workloadAccessToken } = await agentCore.send(
     new GetWorkloadAccessTokenCommand({ workloadName: GATEWAY_WORKLOAD })

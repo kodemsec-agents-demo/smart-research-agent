@@ -106,7 +106,15 @@
       "credentialProvider": "triage-gateway",
       "scopes": [
         "gateway-quick-start-54ab07/genesis-gateway:invoke"
-      ]
-    }
+      ],
+      "llmUrl": "https://agents-llm-lhzutroj2j.gateway.bedrock-agentcore.us-east-1.amazonaws.com/inference/v1"
+    },
+    "entryGateway": {
+      "id": "agents-entry-dxtmfwqite",
+      "roleArn": "arn:aws:iam::643254130632:role/AgentCoreEntryGatewayRole"
+    },
+    "directInvokeRoleArns": [
+      "arn:aws:iam::643254130632:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_d9b970707e32431e"
+    ]
   }
 }

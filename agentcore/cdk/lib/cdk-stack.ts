@@ -11,6 +11,7 @@ import {
 import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
+import { AgentEntryTarget, type AgentEntryGatewayContext } from './agent-entry-target';
 import { ResearchGatewayTools, type ResearchGatewayContext } from './research-gateway-tools';
 
 /**
@@ -133,6 +134,20 @@ export class AgentCoreStack extends Stack {
         gateway: researchGateway,
         runtimes: [...this.application.environments.values()].map((env) => env.runtime),
       });
+    }
+
+    // Every request to the agent goes through the agents' entry gateway, also
+    // created outside this project
+    const entryGateway = this.node.tryGetContext('entryGateway') as AgentEntryGatewayContext | undefined;
+    if (entryGateway) {
+      for (const env of this.application.environments.values()) {
+        new AgentEntryTarget(this, 'ResearchAgentEntryGateway', {
+          gateway: entryGateway,
+          runtimeArn: env.runtime.runtimeArn,
+          targetName: 'research-agent',
+          directInvokeRoleArns: this.node.tryGetContext('directInvokeRoleArns') as string[] | undefined,
+        });
+      }
     }
 
     // Create AgentCoreMcp if there are gateways configured

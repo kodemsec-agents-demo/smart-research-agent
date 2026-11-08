@@ -15,7 +15,13 @@
       "codeLocation": "app/ResearchAgent/",
       "runtimeVersion": "NODE_22",
       "networkMode": "PUBLIC",
-      "protocol": "HTTP"
+      "protocol": "HTTP",
+      "envVars": [
+        {
+          "name": "UNIFIED_TRACES_DESTINATION_ENABLED",
+          "value": "false"
+        }
+      ]
     }
   ],
   "memories": [],
